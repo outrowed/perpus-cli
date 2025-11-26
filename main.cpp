@@ -27,11 +27,15 @@ int main() {
 
     println("For admin account, type: \"admin\"");
 
-    auto login_username =
-        prompt_if("Type account name: ",
-            [&] (auto username) { return accountManager.username_exists(username); },
-            "Account with \"{}\" username does not exist!"
-        );
+    std::string_view login_username;
+
+    while (true) {
+        auto answer = prompt_required("Type account name: ");
+
+        if (accountManager.username_exists(answer)) break;
+
+        println(std::format("Account with \"{}\" username does not exist!"));
+    }
 
     auto login_password = prompt_required("Enter password: ");
 

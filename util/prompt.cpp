@@ -28,11 +28,13 @@ std::string_view prompt_if(
 }
 
 std::string_view prompt_required(std::string_view message) {
-    prompt_if(
-        message,
-        [] (auto answer) { return answer != ""; },
-        "{} is an empty string!"
-    );
+    while (true) {
+        auto answer = prompt(message);
+
+        if (answer != "") return answer;
+
+        println(std::format("{} is an empty string!", answer));
+    }
 }
 
 int prompt_int(const std::string message) {
