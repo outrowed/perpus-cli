@@ -3,12 +3,10 @@
 #include <ranges>
 #include <string>
 #include <format>
-
 #include "./util/prompt.cpp"
 #include "./util/print.cpp"
 #include "./perpus/book.cpp"
 #include "./perpus/book-manager.cpp"
-
 #include "./account/account-manager.cpp"
 using namespace std;
 int main()
@@ -31,16 +29,15 @@ int main()
 
      string_view login_username;
 
-    while (true) {
-        auto answer = prompt_required("Type account name: ");
+while (true) {
+    auto answer = prompt_required("Type account name: ");
 
-        if (accountManager.username_exists(answer)) {
-            login_username = answer;
-        }
-
-        println( format("Account with \"{}\" username does not exist!"));
+    if (accountManager.username_exists(answer)) {
+        login_username = answer;
     }
 
+    println( format("Account with \"{}\" username does not exist!", answer));
+}
     auto login_password = prompt_required("Enter password: ");
 
     auto login_result = accountManager.login(login_username, login_password);
