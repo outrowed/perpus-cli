@@ -3,6 +3,6 @@
 
 #pragma once
 
-void println(const std::string message) {
+void println(std::string_view message) {
     std::cout << message << std::endl;
 }
