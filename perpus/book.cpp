@@ -2,7 +2,6 @@
 #include <string>
 #include <filesystem>
 #include <fstream>
-
 #pragma once
 using namespace std;
 struct Book {
