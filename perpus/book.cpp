@@ -9,6 +9,7 @@ struct Book {
      string author;
     int publicationYear;
      string isbn;
+    int stock; 
 };
 
 /* namespace fs =  filesystem;
