@@ -22,7 +22,7 @@ int main() {
     println("Silahkan masuk akun terlebih dahulu.");
 
     for (auto username : accountManager.get_usernames()) {
-        println(std::format("* {}", username));
+        std::cout << "* " << username << std::endl;
     }
 
     println("For admin account, type: \"admin\"");
@@ -32,7 +32,9 @@ int main() {
     while (true) {
         auto answer = prompt_required("Type account name: ");
 
-        if (accountManager.username_exists(answer)) break;
+        if (accountManager.username_exists(answer)) {
+            login_username = answer;
+        }
 
         println(std::format("Account with \"{}\" username does not exist!"));
     }
