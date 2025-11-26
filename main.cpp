@@ -1,28 +1,51 @@
 #include <iostream>
+#include <ranges>
+#include <string>
+#include <format>
 
 #include "./util/prompt.cpp"
 #include "./util/print.cpp"
 #include "./perpus/book.cpp"
 #include "./perpus/book-manager.cpp"
 
-#define add(x,y) ((x)+(y))
+#include "./account/account-manager.cpp"
 
 int main() {
+    println(
+        "==========================================\n"
+        "  Selamat datang ke Perpustakaan Digital  \n"
+        "==========================================s\n"
+    );
 
-    Book myBook {
-        .title = prompt("Enter book title: "),
-        .author = prompt("Enter book author: "),
-        .publicationYear = prompt_int("Enter publication year: "),
-        .isbn = prompt("Enter book ISBN: ")
-    };
+    AccountManager accountManager {};
 
-    println("Book Details:");
-    println("Title: " + myBook.title);
-    println("Author: " + myBook.author);
-    println("Publication Year: " + std::to_string(myBook.publicationYear));
-    println("ISBN: " + myBook.isbn);
+    println("Silahkan masuk akun terlebih dahulu.");
 
-    BookManager bookManager = BookManager::BookManagerParam { .booksDirectory = "./books" };
+    for (auto username : accountManager.get_usernames()) {
+        println(std::format("* {}", username));
+    }
+
+    println("For admin account, type: \"admin\"");
+
+    auto login_username =
+        prompt_if("Type account name: ",
+            [&] (auto username) { return accountManager.username_exists(username); },
+            "Account with \"{}\" username does not exist!"
+        );
+
+    auto login_password = prompt_required("Enter password: ");
+
+    auto login_result = accountManager.login(login_username, login_password);
+
+    if (login_result == LoginResult::SUCCESS) {
+        std::cout << "You have successfully log into " << login_username << std::endl;
+    }
+    else if (login_result == LoginResult::INVALID_PASSWORD) {
+        println("Invalid password!");
+    }
+    else {
+        println("User not found!");
+    }
 
     return 0;
 }
