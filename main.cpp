@@ -13,7 +13,7 @@
 int main() {
     println(
         "==========================================\n"
-        "  Selamat datang ke Perpustakaan Digital  \n"
+        "  Selamat datang ke Perpustakaan Sigma\n"
         "==========================================s\n"
     );
 
