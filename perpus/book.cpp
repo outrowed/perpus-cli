@@ -11,7 +11,7 @@ struct Book {
     std::string isbn;
 };
 
-namespace fs = std::filesystem;
+/* namespace fs = std::filesystem;
 
 bool bookExists(const fs::path& directory, const std::string& isbn) {
     fs::path bookPath = directory / (isbn + ".txt");
@@ -42,4 +42,4 @@ void loadBook(const fs::path& directory, const std::string& isbn, Book& book) {
         std::getline(inFile, book.isbn);
         inFile.close();
     }
-}
+} */
