@@ -8,4 +8,6 @@
 * Mikayla
 * Nazwa
 * Fathir
-* Taruna Prasetya
+* Taruna Prasetya (2507421081)
+
+*tolong isi NIM kalian disini*
