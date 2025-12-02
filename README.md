@@ -4,7 +4,7 @@
 *Tugas Kelompok Algoritma*
 
 * Achmad Zulfi Fahmi
-* Aidil
+* Aidil (2507421018) 
 * Mikayla
 * Nazwa
 * Fathir
