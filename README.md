@@ -5,8 +5,8 @@
 
 * Achmad Zulfi Fahmi
 * Aidil
-* Mikayla
-* Nazwa
+* Mikayla (2507421054)
+* Nazwa (2507421055)
 * Fathir
 * Taruna Prasetya (2507421081)
 
