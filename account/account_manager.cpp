@@ -78,6 +78,14 @@ bool AccountManager::update_role(string_view username, Role newRole) {
     return true;
 }
 
+void AccountManager::clear() {
+    accounts.clear();
+}
+
+void AccountManager::add_account_raw(const Account& account) {
+    accounts.push_back(account);
+}
+
 Account* AccountManager::find_mutable(string_view username) {
     for (vector<Account>::iterator it = accounts.begin(); it != accounts.end(); ++it) {
         if (it->username == username) {

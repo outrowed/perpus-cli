@@ -39,6 +39,10 @@ public:
     static std::string human_date(std::time_t time);
     static std::string status_label(LoanStatus status);
 
+    void clear();
+    void add_request_raw(const LoanRequest& request);
+    void set_next_id(int next);
+
 private:
     BookManager& bookManager;
     int nextId;

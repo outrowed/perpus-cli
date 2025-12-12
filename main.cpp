@@ -18,8 +18,12 @@ int main() {
     );
 
     Session session;
+    load_accounts(session);
+    load_loans(session);
     load_books(session);
     seed_sample_data(session);
+    save_accounts(session);
+    save_loans(session);
 
     while (true) {
         println("\n=== Main Menu ===");
@@ -46,7 +50,10 @@ int main() {
                 run_user_menu(session, loggedIn.value());
             }
         } else if (choice == "2") {
-            register_account(session.accounts);
+            bool created = register_account(session.accounts);
+            if (created) {
+                save_accounts(session);
+            }
         } else if (choice == "0") {
             println("Goodbye!");
             break;

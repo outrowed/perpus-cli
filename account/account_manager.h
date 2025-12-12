@@ -37,6 +37,9 @@ public:
     bool update_password(std::string_view username, std::string newPassword);
     bool update_role(std::string_view username, Role newRole);
 
+    void clear();
+    void add_account_raw(const Account& account);
+
 private:
     std::vector<Account> accounts;
 

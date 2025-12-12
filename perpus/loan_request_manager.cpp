@@ -115,3 +115,20 @@ std::string LoanRequestManager::human_date(std::time_t time) {
 std::string LoanRequestManager::status_label(LoanStatus status) {
     return status_to_string_internal(status);
 }
+
+void LoanRequestManager::clear() {
+    requests.clear();
+    nextId = 1;
+}
+
+void LoanRequestManager::add_request_raw(const LoanRequest& request) {
+    requests.push_back(request);
+}
+
+void LoanRequestManager::set_next_id(int next) {
+    if (next > 1) {
+        nextId = next;
+    } else {
+        nextId = 1;
+    }
+}

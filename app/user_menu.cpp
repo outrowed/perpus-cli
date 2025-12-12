@@ -6,6 +6,7 @@
 #include "../util/prompt.h"
 #include "../util/print.h"
 #include "menu_helpers.h"
+#include "session.h"
 
 static void read_book(BookManager& manager) {
     if (!manager.has_books()) {
@@ -30,7 +31,9 @@ static void read_book(BookManager& manager) {
     }
 }
 
-static void request_loan(LoanRequestManager& loanManager, BookManager& manager, const std::string& username) {
+static void request_loan(Session& session, const std::string& username) {
+    LoanRequestManager& loanManager = session.loans;
+    BookManager& manager = session.books;
     if (!manager.has_books()) {
         println("There are no books to request.");
         return;
@@ -50,6 +53,7 @@ static void request_loan(LoanRequestManager& loanManager, BookManager& manager, 
 
     if (loanManager.create_request(username, id)) {
         println("Loan request sent to admin.");
+        save_loans(session);
     } else {
         println("Could not create request. Try again.");
     }
@@ -76,7 +80,9 @@ static void view_requests(const LoanRequestManager& loanManager, const BookManag
     println("==========================\n");
 }
 
-static std::string manage_account(AccountManager& accountManager, LoanRequestManager& loanManager, const std::string& username) {
+static std::string manage_account(Session& session, const std::string& username) {
+    AccountManager& accountManager = session.accounts;
+    LoanRequestManager& loanManager = session.loans;
     std::string current = username;
     while (true) {
         println("\n=== Manage Account ===");
@@ -92,6 +98,8 @@ static std::string manage_account(AccountManager& accountManager, LoanRequestMan
                 loanManager.rename_user_requests(current, newUsername);
                 current = newUsername;
                 println("Username updated.");
+                save_accounts(session);
+                save_loans(session);
             } else {
                 println("Could not update username (it might already be used).");
             }
@@ -99,6 +107,7 @@ static std::string manage_account(AccountManager& accountManager, LoanRequestMan
             std::string newPassword = prompt_required("New password: ");
             if (accountManager.update_password(current, newPassword)) {
                 println("Password updated.");
+                save_accounts(session);
             } else {
                 println("Could not update password.");
             }
@@ -127,11 +136,11 @@ void run_user_menu(Session& session, const std::string& usernameInput) {
         } else if (choice == "2") {
             read_book(session.books);
         } else if (choice == "3") {
-            request_loan(session.loans, session.books, username);
+            request_loan(session, username);
         } else if (choice == "4") {
             view_requests(session.loans, session.books, username);
         } else if (choice == "5") {
-            username = manage_account(session.accounts, session.loans, username);
+            username = manage_account(session, username);
         } else if (choice == "0") {
             return;
         } else {

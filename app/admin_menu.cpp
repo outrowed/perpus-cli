@@ -6,6 +6,7 @@
 #include "../util/prompt.h"
 #include "../util/print.h"
 #include "auth.h"
+#include "session.h"
 #include "menu_helpers.h"
 
 static void admin_add_book(BookManager& manager) {
@@ -116,7 +117,9 @@ static void list_accounts(const AccountManager& accountManager) {
     }
 }
 
-static void admin_edit_account(AccountManager& accountManager, LoanRequestManager& loanManager) {
+static void admin_edit_account(Session& session) {
+    AccountManager& accountManager = session.accounts;
+    LoanRequestManager& loanManager = session.loans;
     if (accountManager.list_accounts().empty()) {
         println("No accounts found.");
         return;
@@ -145,6 +148,8 @@ static void admin_edit_account(AccountManager& accountManager, LoanRequestManage
                 loanManager.rename_user_requests(current, newUsername);
                 current = newUsername;
                 println("Username updated.");
+                save_accounts(session);
+                save_loans(session);
             } else {
                 println("Could not update username (maybe already used).");
             }
@@ -152,6 +157,7 @@ static void admin_edit_account(AccountManager& accountManager, LoanRequestManage
             std::string newPassword = prompt_required("New password: ");
             if (accountManager.update_password(current, newPassword)) {
                 println("Password reset.");
+                save_accounts(session);
             } else {
                 println("Could not update password.");
             }
@@ -162,6 +168,7 @@ static void admin_edit_account(AccountManager& accountManager, LoanRequestManage
                 println("Please choose between admin or user.");
             } else if (accountManager.update_role(current, parsed.value())) {
                 println("Role updated.");
+                save_accounts(session);
             } else {
                 println("Failed to update role.");
             }
@@ -173,7 +180,9 @@ static void admin_edit_account(AccountManager& accountManager, LoanRequestManage
     }
 }
 
-static void admin_manage_accounts(AccountManager& accountManager, LoanRequestManager& loanManager) {
+static void admin_manage_accounts(Session& session) {
+    AccountManager& accountManager = session.accounts;
+    LoanRequestManager& loanManager = session.loans;
     while (true) {
         println("\n=== Account Management ===");
         println("1. List accounts");
@@ -185,9 +194,12 @@ static void admin_manage_accounts(AccountManager& accountManager, LoanRequestMan
         if (choice == "1") {
             list_accounts(accountManager);
         } else if (choice == "2") {
-            admin_edit_account(accountManager, loanManager);
+            admin_edit_account(session);
         } else if (choice == "3") {
-            register_account(accountManager);
+            bool created = register_account(accountManager);
+            if (created) {
+                save_accounts(session);
+            }
         } else if (choice == "0") {
             return;
         } else {
@@ -196,7 +208,9 @@ static void admin_manage_accounts(AccountManager& accountManager, LoanRequestMan
     }
 }
 
-static void admin_review_requests(LoanRequestManager& loanManager, BookManager& manager) {
+static void admin_review_requests(Session& session) {
+    LoanRequestManager& loanManager = session.loans;
+    BookManager& manager = session.books;
     if (loanManager.list_requests().empty()) {
         println("No loan requests yet.");
         return;
@@ -234,9 +248,11 @@ static void admin_review_requests(LoanRequestManager& loanManager, BookManager& 
     if (choice == "1") {
         loanManager.set_status(id, LoanStatus::Approved);
         println("Request approved.");
+        save_loans(session);
     } else if (choice == "2") {
         loanManager.set_status(id, LoanStatus::Rejected);
         println("Request rejected.");
+        save_loans(session);
     } else if (choice == "0") {
         return;
     } else {
@@ -256,9 +272,9 @@ void run_admin_menu(Session& session) {
         if (choice == "1") {
             admin_book_menu(session.books);
         } else if (choice == "2") {
-            admin_review_requests(session.loans, session.books);
+            admin_review_requests(session);
         } else if (choice == "3") {
-            admin_manage_accounts(session.accounts, session.loans);
+            admin_manage_accounts(session);
         } else if (choice == "0") {
             return;
         } else {

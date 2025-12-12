@@ -24,12 +24,12 @@ std::optional<std::string> login(AccountManager& accountManager) {
     return std::nullopt;
 }
 
-void register_account(AccountManager& accountManager) {
+bool register_account(AccountManager& accountManager) {
     println("\n=== Create Account ===");
     std::string username = prompt_required("Choose a username: ");
     if (accountManager.username_exists(username)) {
         println("That username is already in use.");
-        return;
+        return false;
     }
 
     std::string password = prompt_required("Choose a password: ");
@@ -39,4 +39,5 @@ void register_account(AccountManager& accountManager) {
     } else {
         println("Could not create account.");
     }
+    return created;
 }
