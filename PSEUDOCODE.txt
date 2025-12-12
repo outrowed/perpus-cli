@@ -1,0 +1,98 @@
+// Pseudocode for perpus_cli (loops, menus, and actions)
+
+MAIN LOOP:
+  load accounts from data/accounts.txt (if missing, start empty)
+  load loans from data/loans.txt (if missing, start empty)
+  load books from details/*.json
+  seed default accounts/books if none exist, then save accounts/loans
+  WHILE true:
+    show MAIN MENU: [1] Login, [2] Create account, [0] Exit
+    IF choice == 1:
+      ask username/password; authenticate
+      IF admin -> call ADMIN_MENU
+      ELSE -> call USER_MENU(username)
+    ELSE IF choice == 2:
+      register new user (hash password), save accounts
+    ELSE IF choice == 0:
+      break
+    ELSE: repeat
+
+USER_MENU(username):
+  WHILE true:
+    show USER MENU:
+      [1] Browse library
+      [2] Read a book (view PDF path)
+      [3] Request to loan a book
+      [4] Check loan request status
+      [5] Return a book (mark approved as returned)
+      [6] Manage account
+      [0] Logout
+    CASE choice:
+      1: list all books (id, title, author, pdf path)
+      2: prompt book id, show pdf path, warn if file missing
+      3: prompt book id, create Pending request if not already pending, save loans
+      4: list this user's requests with status/date
+      5: list this user's Approved requests, prompt request id, set status Returned, save loans
+      6: MANAGE_ACCOUNT(username) -> may update username/password; save accounts and loans on change
+      0: break
+      default: repeat
+
+MANAGE_ACCOUNT(username):
+  WHILE true:
+    show ACCOUNT MENU: [1] Change username, [2] Change password, [0] Back
+    IF 1: prompt new username; if unique, update account, rename requests, save accounts/loans, update current username
+    IF 2: prompt new password; update hash, save accounts
+    IF 0: return current username
+    ELSE: repeat
+
+ADMIN_MENU:
+  WHILE true:
+    show ADMIN MENU:
+      [1] Manage books
+      [2] Review loan requests
+      [3] Manage accounts
+      [0] Logout
+    CASE choice:
+      1: BOOK_MENU
+      2: REVIEW_REQUESTS
+      3: ACCOUNTS_MENU
+      0: break
+      default: repeat
+
+BOOK_MENU:
+  WHILE true:
+    show BOOK MENU: [1] List, [2] Add, [3] Edit, [0] Back
+    CASE:
+      1: list all books (id, isbn, title, publisher, year, stock, pdf path)
+      2: prompt fields (isbn/title/author/publisher/year/stock), ensure unique isbn, save book to details/<id>.json, create placeholder pdf path if needed
+      3: prompt book id, edit fields (validate unique isbn), save updated book
+      0: back
+      default: repeat
+
+REVIEW_REQUESTS:
+  list all loan requests (id, user, book, status, date)
+  prompt request id (or blank to back)
+  IF id valid: show options [1] Approve, [2] Reject, [0] Back
+    set status Approved/Rejected, save loans
+
+ACCOUNTS_MENU:
+  WHILE true:
+    show ACCOUNTS: [1] List, [2] Edit, [3] Create, [0] Back
+    CASE:
+      1: list all accounts with role
+      2: select username -> EDIT_ACCOUNT
+      3: register new user; save accounts
+      0: back
+
+EDIT_ACCOUNT(username):
+  WHILE true:
+    show EDIT menu: [1] Change username, [2] Reset password, [3] Change role, [0] Back
+    IF 1: prompt new username; update account; rename requests; save accounts/loans
+    IF 2: prompt new password; update hash; save accounts
+    IF 3: prompt role (admin/user); update; save accounts
+    IF 0: return
+
+DATA STORAGE:
+  Books: details/<id>.json (metadata), PDFs at pdf/<id>.pdf
+  Accounts: data/accounts.txt lines "username|hash|Role"
+  Loans: data/loans.txt lines "id|username|bookId|timestamp|Status" (Status: Pending/Approved/Rejected/Returned)
