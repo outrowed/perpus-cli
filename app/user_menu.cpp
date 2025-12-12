@@ -119,6 +119,56 @@ static std::string manage_account(Session& session, const std::string& username)
     }
 }
 
+static void return_book(Session& session, const std::string& username) {
+    std::vector<LoanRequest> requests = session.loans.requests_for_user(username);
+    bool hasActive = false;
+    for (std::size_t i = 0; i < requests.size(); ++i) {
+        if (requests[i].status == LoanStatus::Approved) {
+            hasActive = true;
+            break;
+        }
+    }
+    if (!hasActive) {
+        println("No approved loans to return.");
+        return;
+    }
+
+    println("\n=== Return Book ===");
+    for (std::size_t i = 0; i < requests.size(); ++i) {
+        const LoanRequest& req = requests[i];
+        if (req.status == LoanStatus::Approved) {
+            const Book* book = session.books.get_book_by_id(req.bookId);
+            std::string title = "Unknown book";
+            if (book != nullptr) {
+                title = book->title;
+            }
+            std::cout << "#" << req.id << " " << title << " (" << req.bookId << ")\n";
+        }
+    }
+    std::string idText = prompt_required("Enter request ID to mark as returned: ");
+    int id = 0;
+    try {
+        id = std::stoi(idText);
+    } catch (const std::invalid_argument&) {
+        println("Invalid ID.");
+        return;
+    }
+
+    LoanRequest* req = session.loans.get_request(id);
+    if (req == nullptr || req->username != username) {
+        println("Request not found for your account.");
+        return;
+    }
+    if (req->status != LoanStatus::Approved) {
+        println("Only approved requests can be returned.");
+        return;
+    }
+
+    session.loans.set_status(id, LoanStatus::Returned);
+    save_loans(session);
+    println("Book marked as returned.");
+}
+
 void run_user_menu(Session& session, const std::string& usernameInput) {
     std::string username = usernameInput;
     while (true) {
@@ -127,7 +177,8 @@ void run_user_menu(Session& session, const std::string& usernameInput) {
         println("2. Read a book (view PDF path)");
         println("3. Request to loan a book");
         println("4. Check loan request status");
-        println("5. Manage account");
+        println("5. Return a book (mark approved request as returned)");
+        println("6. Manage account");
         println("0. Logout");
 
         std::string choice = prompt_required("Choose: ");
@@ -140,6 +191,8 @@ void run_user_menu(Session& session, const std::string& usernameInput) {
         } else if (choice == "4") {
             view_requests(session.loans, session.books, username);
         } else if (choice == "5") {
+            return_book(session, username);
+        } else if (choice == "6") {
             username = manage_account(session, username);
         } else if (choice == "0") {
             return;

@@ -10,7 +10,8 @@ class BookManager;
 enum class LoanStatus {
     Pending,
     Approved,
-    Rejected
+    Rejected,
+    Returned
 };
 
 struct LoanRequest {

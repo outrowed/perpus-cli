@@ -102,6 +102,8 @@ bool load_loans(Session& session) {
                 req.status = LoanStatus::Approved;
             } else if (statusText == "Rejected") {
                 req.status = LoanStatus::Rejected;
+            } else if (statusText == "Returned") {
+                req.status = LoanStatus::Returned;
             } else {
                 req.status = LoanStatus::Pending;
             }

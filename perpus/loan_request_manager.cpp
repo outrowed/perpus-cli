@@ -15,6 +15,7 @@ namespace {
             case LoanStatus::Pending: return "Pending";
             case LoanStatus::Approved: return "Approved";
             case LoanStatus::Rejected: return "Rejected";
+            case LoanStatus::Returned: return "Returned";
         }
         return "Unknown";
     }
