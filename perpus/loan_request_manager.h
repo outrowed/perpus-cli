@@ -22,6 +22,7 @@ struct LoanRequest {
     LoanStatus status;
 };
 
+// Tracks loan requests in memory and coordinates status changes.
 class LoanRequestManager {
 public:
     explicit LoanRequestManager(BookManager& bookManager);

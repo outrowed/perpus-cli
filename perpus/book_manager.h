@@ -5,11 +5,13 @@
 
 #include "book.h"
 
+// Configuration for where to store book details and pdf files.
 struct BookStorageConfig {
     std::string detailsDirectory;
     std::string pdfDirectory;
 };
 
+// Handles in-memory book list plus disk persistence to details/<id>.json and pdf/<id>.pdf paths.
 class BookManager {
 public:
     BookManager();

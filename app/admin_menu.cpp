@@ -1,5 +1,7 @@
 #include "admin_menu.h"
 
+// Implements admin flows: book management, request approvals, and account maintenance.
+
 #include <iostream>
 #include <optional>
 

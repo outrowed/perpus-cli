@@ -10,6 +10,7 @@ using std::string;
 using std::vector;
 
 namespace {
+    // Helpers for lightweight JSON-ish parsing/writing without dependencies.
     string read_file_to_string(const string& path) {
         std::ifstream input(path);
         std::ostringstream buffer;

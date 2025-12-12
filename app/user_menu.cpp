@@ -1,5 +1,7 @@
 #include "user_menu.h"
 
+// Implements user flows: browse/read, request/return, and account updates.
+
 #include <filesystem>
 #include <iostream>
 

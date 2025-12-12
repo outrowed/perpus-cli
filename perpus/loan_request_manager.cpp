@@ -10,6 +10,7 @@ using std::string;
 using std::vector;
 
 namespace {
+    // Simple helpers to map status to string and parse time formatting.
     string status_to_string_internal(LoanStatus status) {
         switch (status) {
             case LoanStatus::Pending: return "Pending";
