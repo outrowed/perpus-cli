@@ -16,6 +16,8 @@ cmake-build-*/
 *.ninja_log
 compile_commands.json
 Makefile
+perpus_cli
+*.out
 
 # Generated data
 details/
