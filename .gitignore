@@ -22,6 +22,7 @@ perpus_cli
 # Generated data
 details/
 pdf/
+data/
 
 # OS/editor noise
 .DS_Store
