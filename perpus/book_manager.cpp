@@ -11,6 +11,15 @@ using std::string;
 using std::vector;
 
 namespace {
+    bool is_space_char(char c) {
+        unsigned char uc = c;
+        return  isspace(uc) != 0;
+    }
+
+    bool is_digit_char(char c) {
+        unsigned char uc = c;
+        return  isdigit(uc) != 0;
+    }
 //baca file jd string
     string read_file_to_string(const string& path) {
          ifstream input(path);
@@ -24,10 +33,10 @@ namespace {
     string trim_copy(const string& text) {
         size_t start = 0;
         size_t end = text.length();
-        while (start < end &&  isspace(static_cast<unsigned char>(text[start]))) {
+        while (start < end && is_space_char(text[start])) {
             start++;
         }
-        while (end > start &&  isspace(static_cast<unsigned char>(text[end - 1]))) {
+        while (end > start && is_space_char(text[end - 1])) {
             end--;
         }
         return text.substr(start, end - start);
@@ -66,11 +75,11 @@ namespace {
             return 0;
         }
         size_t start = colon + 1;
-        while (start < content.size() &&  isspace(static_cast<unsigned char>(content[start]))) {
+        while (start < content.size() && is_space_char(content[start])) {
             start++;
         }
         size_t end = start;
-        while (end < content.size() && ( isdigit(static_cast<unsigned char>(content[end])) || content[end] == '-')) {
+        while (end < content.size() && (is_digit_char(content[end]) || content[end] == '-')) {
             end++;
         }
         string value = content.substr(start, end - start);

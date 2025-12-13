@@ -27,11 +27,11 @@ std::optional<Account> AccountManager::get_account(string_view username) const {
 std::pair<LoginResult, Account*> AccountManager::authenticate(string_view username, string_view password) {
     Account* account = find_mutable(username);
     if (account == nullptr) {
-        return std::make_pair(LoginResult::UserNotFound, static_cast<Account*>(nullptr));
+        return std::make_pair(LoginResult::UserNotFound, nullptr);
     }
     bool passwordOk = bcrypt::validatePassword(string(password), account->passwordHash);
     if (!passwordOk) {
-        return std::make_pair(LoginResult::InvalidPassword, static_cast<Account*>(nullptr));
+        return std::make_pair(LoginResult::InvalidPassword, nullptr);
     }
     return std::make_pair(LoginResult::Success, account);
 }

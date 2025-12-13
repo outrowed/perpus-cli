@@ -13,11 +13,18 @@ std::string role_to_string(Role role) {
 }
 
 std::optional<Role> parse_role(const std::string& raw) {
+    auto to_lower_ascii = [](char c) {
+        if (c >= 'A' && c <= 'Z') {
+            char lower = 'a' + (c - 'A');
+            return lower;
+        }
+        return c;
+    };
+
     std::string lower;
     lower.reserve(raw.size());
     for (size_t i = 0; i < raw.size(); ++i) {
-        char c = raw[i];
-        lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+        lower.push_back(to_lower_ascii(raw[i]));
     }
     if (lower == "admin") {
         return Role::Admin;

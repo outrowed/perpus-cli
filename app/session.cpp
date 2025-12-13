@@ -97,7 +97,8 @@ bool load_loans(Session& session) {
             req.id = std::stoi(idText);
             req.username = username;
             req.bookId = bookId;
-            req.requestedAt = static_cast<std::time_t>(std::stoll(timeText));
+            long long storedSeconds = std::stoll(timeText);
+            req.requestedAt = storedSeconds;
             if (statusText == "Approved") {
                 req.status = LoanStatus::Approved;
             } else if (statusText == "Rejected") {
@@ -128,8 +129,9 @@ bool save_loans(const Session& session) {
     for (std::size_t i = 0; i < requests.size(); ++i) {
         const LoanRequest& req = requests[i];
         std::string statusText = LoanRequestManager::status_label(req.status);
+        long long requestedSeconds = req.requestedAt;
         output << req.id << "|" << req.username << "|" << req.bookId << "|"
-               << static_cast<long long>(req.requestedAt) << "|" << statusText << "\n";
+               << requestedSeconds << "|" << statusText << "\n";
     }
     return true;
 }
