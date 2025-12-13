@@ -2,7 +2,6 @@
 
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 enum class Role {
@@ -14,12 +13,6 @@ struct Account {
     std::string username;
     std::string passwordHash;
     Role role;
-};
-
-enum class LoginResult {
-    Success,
-    InvalidPassword,
-    UserNotFound
 };
 
 class AccountManager {

@@ -35,7 +35,7 @@ static void read_book(BookManager& manager) {
     }
 
     show_book_list(manager);
-    std::string id = prompt_required("Enter book ID to read: ");
+    std::string id = prompt_required("Enter book ISBN to read: ");
     try {
         manager.get_book_by_id(id);
     } catch (const std::exception&) {
@@ -66,19 +66,20 @@ static void request_loan(Session& session, const std::string& username) {
     }
 
     show_book_list(manager);
-    std::string id = prompt_required("Enter book ID to request: ");
+    std::string id = prompt_required("Enter book ISBN to request: ");
+    Book book;
     try {
-        manager.get_book_by_id(id);
+        book = manager.get_book_by_id(id);
     } catch (const std::exception&) {
         println("Book not found.");
         return;
     }
-    if (loanManager.user_has_pending_for_book(username, id)) {
+    if (loanManager.user_has_pending_for_book(username, book.id)) {
         println("You already have a pending request for this book.");
         return;
     }
 
-    if (loanManager.create_request(username, id)) {
+    if (loanManager.create_request(username, book.id)) {
         println("Loan request sent to admin.");
         save_loans(session);
     } else {

@@ -32,7 +32,7 @@ static void admin_add_book(BookManager& manager) {
         try {
             const Book& stored = manager.get_book_by_isbn(book.isbn);
             ensure_pdf_placeholder(manager, stored);
-            std::cout << "Book added with ID: " << stored.id << "\n";
+            std::cout << "Book added with ISBN: " << stored.id << "\n";
             std::cout << "Place the PDF at: " << manager.pdf_path_for_id(stored.id) << "\n";
         } catch (const std::exception&) {}
     } else {
@@ -47,7 +47,7 @@ static void admin_edit_book(BookManager& manager) {
     }
 
     show_book_list(manager);
-    std::string id = prompt_required("Enter book ID to edit: ");
+    std::string id = prompt_required("Enter book ISBN to edit: ");
     Book updated;
     try {
         updated = manager.get_book_by_id(id);

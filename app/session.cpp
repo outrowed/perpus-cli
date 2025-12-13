@@ -68,6 +68,13 @@ bool save_accounts(const Session& session) {
 }
 
 bool load_loans(Session& session) {
+    auto ensure_isbn_prefix = [](const std::string& value) {
+        if (value.size() >= 5 && value.rfind("ISBN-", 0) == 0) {
+            return value;
+        }
+        return std::string("ISBN-") + value;
+    };
+
     std::filesystem::path path(session.loansFile);
     if (!std::filesystem::exists(path)) {
         return true;
@@ -96,7 +103,7 @@ bool load_loans(Session& session) {
             LoanRequest req;
             req.id = std::stoi(idText);
             req.username = username;
-            req.bookId = bookId;
+            req.bookId = ensure_isbn_prefix(bookId);
             long long storedSeconds = std::stoll(timeText);
             req.requestedAt = storedSeconds;
             if (statusText == "Approved") {

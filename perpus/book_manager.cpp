@@ -3,7 +3,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <random>
 #include <sstream>
 #include <stdexcept>
 
@@ -85,7 +84,13 @@ bool BookManager::load_from_disk() {
         if (getline(input, line)) {
             Book book;
             if (parse_book_record(line, book)) {
-                books.push_back(book);
+                book.isbn = normalize_isbn(book.isbn);
+                book.id = book.isbn;
+                try {
+                    find_index_by_isbn(book.isbn);
+                } catch (const std::exception&) {
+                    books.push_back(book);
+                }
             }
         }
     }
@@ -94,14 +99,8 @@ bool BookManager::load_from_disk() {
 //buat nambahin buku
 bool BookManager::add_book(const Book& bookInput) {
     Book book = bookInput;
-    if (book.id.empty()) {
-        book.id = generate_id();
-    }
-
-    try {
-        find_index_by_id(book.id);
-        return false;
-    } catch (const std::exception&) {}
+    book.isbn = normalize_isbn(book.isbn);
+    book.id = book.isbn;
 
     try {
         find_index_by_isbn(book.isbn);
@@ -114,14 +113,16 @@ bool BookManager::add_book(const Book& bookInput) {
 //update buku make id
 bool BookManager::update_book_by_id(const string& id, const Book& updated) {
     size_t index = 0;
+    string normalizedId = normalize_isbn(id);
     try {
-        index = find_index_by_id(id);
+        index = find_index_by_id(normalizedId);
     } catch (const std::exception&) {
         return false;
     }
 
+    string normalizedIsbn = normalize_isbn(updated.isbn);
     try {
-        size_t isbnIndex = find_index_by_isbn(updated.isbn);
+        size_t isbnIndex = find_index_by_isbn(normalizedIsbn);
         if (books[isbnIndex].id != id) {
             return false;
         }
@@ -130,21 +131,40 @@ bool BookManager::update_book_by_id(const string& id, const Book& updated) {
     }
 
     Book copy = updated;
-    copy.id = id;
+    copy.isbn = normalizedIsbn;
+    copy.id = normalizedIsbn;
     books[index] = copy;
-    return save_book_to_disk(copy);
+
+     filesystem::path oldDetails = details_path_for_id(normalizedId);
+     filesystem::path newDetails = details_path_for_id(copy.id);
+    bool saved = save_book_to_disk(copy);
+    if (saved && oldDetails != newDetails &&  filesystem::exists(oldDetails)) {
+         filesystem::remove(oldDetails);
+    }
+
+     filesystem::path oldPdf = pdf_path_internal(normalizedId);
+     filesystem::path newPdf = pdf_path_internal(copy.id);
+    if (oldPdf != newPdf &&  filesystem::exists(oldPdf)) {
+        try {
+             filesystem::create_directories(newPdf.parent_path());
+             filesystem::rename(oldPdf, newPdf);
+        } catch (const std::exception&) {}
+    }
+
+    return saved;
 }
 //hapus buku make id
 bool BookManager::remove_book_by_id(const string& id) {
     size_t index = 0;
+    string normalizedId = normalize_isbn(id);
     try {
-        index = find_index_by_id(id);
+        index = find_index_by_id(normalizedId);
     } catch (const std::exception&) {
         return false;
     }
 
     books.erase(books.begin() + index);
-     filesystem::path detailsFile = details_path_for_id(id);
+     filesystem::path detailsFile = details_path_for_id(normalizedId);
     if ( filesystem::exists(detailsFile)) {
          filesystem::remove(detailsFile);
     }
@@ -152,34 +172,25 @@ bool BookManager::remove_book_by_id(const string& id) {
 }
 //nyari buku pake id
 const Book& BookManager::get_book_by_id(const string& id) const {
-    size_t index = find_index_by_id(id);
+    string normalized = normalize_isbn(id);
+    size_t index = find_index_by_id(normalized);
     return books[index];
 }
 //nyari buku pake isbn
 const Book& BookManager::get_book_by_isbn(const string& isbn) const {
-    size_t index = find_index_by_isbn(isbn);
+    string normalized = normalize_isbn(isbn);
+    size_t index = find_index_by_isbn(normalized);
     return books[index];
 }
 //path detail buku
 string BookManager::pdf_path_for_id(const string& id) const {
-    return pdf_path_internal(id);
+    string normalized = normalize_isbn(id);
+    return pdf_path_internal(normalized);
 }//cek buku ad apa kaga di disk
 bool BookManager::book_exists_on_disk(const string& id) const {
-     filesystem::path detailsFile = details_path_for_id(id);
+    string normalized = normalize_isbn(id);
+     filesystem::path detailsFile = details_path_for_id(normalized);
     return  filesystem::exists(detailsFile);
-}
-//buat id buku
-string BookManager::generate_id() const {
-     random_device rd;
-     mt19937 gen(rd());
-     uniform_int_distribution<int> dist(0, 15);
-    const char* hex = "0123456789abcdef";
-    string value = "book-";
-    for (int i = 0; i < 12; ++i) {
-        int v = dist(gen);
-        value.push_back(hex[v]);
-    }
-    return value;
 }
 //naro detail buku
 string BookManager::details_path_for_id(const string& id) const {
@@ -192,6 +203,13 @@ string BookManager::pdf_path_internal(const string& id) const {
      filesystem::path base(config.pdfDirectory);
     base /= id + ".pdf";
     return base.string();
+}
+
+string BookManager::normalize_isbn(const string& raw) const {
+    if (raw.size() >= 5 && raw.substr(0, 5) == "ISBN-") {
+        return raw;
+    }
+    return "ISBN-" + raw;
 }
 
 void BookManager::ensure_directories() const {

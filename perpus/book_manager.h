@@ -11,7 +11,7 @@ struct BookStorageConfig {
      string pdfDirectory;
 };
 
-// Handles in-memory book list plus disk persistence to pipe-separated details/<id>.csv and pdf/<id>.pdf paths.
+// Handles in-memory book list; book IDs are normalized ISBNs ("ISBN-..."); persists to pipe-separated details/<id>.csv and pdf/<id>.pdf paths.
 class BookManager {
 public:
     BookManager();
@@ -35,9 +35,9 @@ private:
     BookStorageConfig config;
      vector<Book> books;
 
-     string generate_id() const;
      string details_path_for_id(const  string& id) const;
      string pdf_path_internal(const  string& id) const;
+    string normalize_isbn(const  string& raw) const;
     void ensure_directories() const;
     bool save_book_to_disk(const Book& book) const;
 

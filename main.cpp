@@ -1,4 +1,5 @@
 #include <string>
+#include <exception>
 
 #include "app/admin_menu.h"
 #include "app/auth.h"

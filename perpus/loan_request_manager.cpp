@@ -60,19 +60,21 @@ bool LoanRequestManager::user_has_pending_for_book(const std::string& username, 
 }
 
 bool LoanRequestManager::create_request(const std::string& username, const std::string& bookId) {
+    string normalizedBookId;
     try {
-        bookManager.get_book_by_id(bookId);
+        const Book& book = bookManager.get_book_by_id(bookId);
+        normalizedBookId = book.id;
     } catch (const std::exception&) {
         return false;
     }
-    if (user_has_pending_for_book(username, bookId)) {
+    if (user_has_pending_for_book(username, normalizedBookId)) {
         return false;
     }
 
     LoanRequest request;
     request.id = nextId++;
     request.username = username;
-    request.bookId = bookId;
+    request.bookId = normalizedBookId;
     request.requestedAt = std::time(0);
     request.status = LoanStatus::Pending;
 
