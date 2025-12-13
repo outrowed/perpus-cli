@@ -32,8 +32,8 @@ static void admin_add_book(BookManager& manager) {
         try {
             const Book& stored = manager.get_book_by_isbn(book.isbn);
             ensure_pdf_placeholder(manager, stored);
-            std::cout << "Book added with ISBN: " << stored.id << "\n";
-            std::cout << "Place the PDF at: " << manager.pdf_path_for_id(stored.id) << "\n";
+            std::cout << "Book added with ISBN: " << stored.isbn << "\n";
+            std::cout << "Place the PDF at: " << manager.pdf_path_for_id(stored.isbn) << "\n";
         } catch (const std::exception&) {}
     } else {
         println("Failed to add book.");
@@ -60,7 +60,7 @@ static void admin_edit_book(BookManager& manager) {
     if (!newIsbn.empty() && newIsbn != updated.isbn) {
         try {
             const Book& isbnCheck = manager.get_book_by_isbn(newIsbn);
-            if (isbnCheck.id != id) {
+            if (isbnCheck.isbn != updated.isbn) {
                 println("Another book already uses that ISBN.");
                 return;
             }

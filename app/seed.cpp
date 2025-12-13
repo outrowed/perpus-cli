@@ -16,7 +16,6 @@ void seed_sample_data(Session& session) {
 
     Book sample1;
     sample1.isbn = "ISBN-001";
-    sample1.id = sample1.isbn;
     sample1.title = "Pemrograman C++ Dasar";
     sample1.author = "Tim Sigma";
     sample1.publisher = "Sigma Press";
@@ -25,7 +24,6 @@ void seed_sample_data(Session& session) {
 
     Book sample2;
     sample2.isbn = "ISBN-002";
-    sample2.id = sample2.isbn;
     sample2.title = "Algoritma Praktis";
     sample2.author = "Tim Sigma";
     sample2.publisher = "Sigma Press";

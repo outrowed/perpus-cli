@@ -74,12 +74,12 @@ static void request_loan(Session& session, const std::string& username) {
         println("Book not found.");
         return;
     }
-    if (loanManager.user_has_pending_for_book(username, book.id)) {
+    if (loanManager.user_has_pending_for_book(username, book.isbn)) {
         println("You already have a pending request for this book.");
         return;
     }
 
-    if (loanManager.create_request(username, book.id)) {
+    if (loanManager.create_request(username, book.isbn)) {
         println("Loan request sent to admin.");
         save_loans(session);
     } else {

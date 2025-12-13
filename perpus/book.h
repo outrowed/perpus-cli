@@ -4,7 +4,6 @@
 using namespace std;
 
 struct Book {
-    string id;
     string isbn;
     string title;
     string author;

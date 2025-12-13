@@ -63,7 +63,7 @@ bool LoanRequestManager::create_request(const std::string& username, const std::
     string normalizedBookId;
     try {
         const Book& book = bookManager.get_book_by_id(bookId);
-        normalizedBookId = book.id;
+        normalizedBookId = book.isbn;
     } catch (const std::exception&) {
         return false;
     }

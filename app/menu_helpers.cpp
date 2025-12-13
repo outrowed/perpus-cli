@@ -59,10 +59,10 @@ void show_book_list(const BookManager& manager) {
     println("\n=== Library ===");
     for (size_t i = 0; i < list.size(); ++i) {
         const Book& book = list[i];
-        std::cout << "- [" << book.id << "] " << book.title << " by " << book.author << "\n";
+        std::cout << "- [" << book.isbn << "] " << book.title << " by " << book.author << "\n";
         std::cout << "  ISBN: " << book.isbn << " | Publisher: " << book.publisher
                   << " | Year: " << book.publicationYear << " | Stock: " << book.stock << "\n";
-        std::cout << "  PDF path: " << manager.pdf_path_for_id(book.id) << "\n";
+        std::cout << "  PDF path: " << manager.pdf_path_for_id(book.isbn) << "\n";
     }
     println("================\n");
 }
@@ -80,7 +80,7 @@ void print_request_card(const LoanRequest& request, const BookManager& manager) 
 }
 
 void ensure_pdf_placeholder(const BookManager& manager, const Book& book) {
-    std::string pdfPath = manager.pdf_path_for_id(book.id);
+    std::string pdfPath = manager.pdf_path_for_id(book.isbn);
     std::filesystem::path path(pdfPath);
     if (std::filesystem::exists(path)) {
         return;

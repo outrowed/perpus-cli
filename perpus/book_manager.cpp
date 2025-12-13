@@ -10,7 +10,7 @@ using std::string;
 using std::vector;
 
 namespace {
-// Parse a pipe-separated book record: id|isbn|title|author|publisher|year|stock
+// Parse a pipe-separated book record: isbn|title|author|publisher|year|stock
     bool parse_book_record(const string& line, Book& out) {
          istringstream iss(line);
         vector<string> parts;
@@ -19,27 +19,26 @@ namespace {
             parts.push_back(part);
         }
 
-        if (parts.size() < 7) {
+        if (parts.size() < 6) {
             return false;
         }
 
-        out.id = parts[0];
-        out.isbn = parts[1];
-        out.title = parts[2];
-        out.author = parts[3];
-        out.publisher = parts[4];
+        out.isbn = parts[0];
+        out.title = parts[1];
+        out.author = parts[2];
+        out.publisher = parts[3];
 
-         istringstream yearStream(parts[5]);
+         istringstream yearStream(parts[4]);
         if (!(yearStream >> out.publicationYear)) {
             out.publicationYear = 0;
         }
 
-         istringstream stockStream(parts[6]);
+         istringstream stockStream(parts[5]);
         if (!(stockStream >> out.stock)) {
             out.stock = 0;
         }
 
-        return !out.id.empty();
+        return !out.isbn.empty();
     }
 }
 //impleentasi manager buku
@@ -75,7 +74,6 @@ bool BookManager::load_from_disk() {
         if (extension != ".csv") {
             continue;
         }
-        string originalIdFromFilename = entry.path().stem().string();
          ifstream input(entry.path());
         if (!input.is_open()) {
             continue;
@@ -86,22 +84,6 @@ bool BookManager::load_from_disk() {
             Book book;
             if (parse_book_record(line, book)) {
                 book.isbn = normalize_isbn(book.isbn);
-                book.id = book.isbn;
-                filesystem::path desiredDetailsPath = details_path_for_id(book.id);
-                if (desiredDetailsPath != entry.path() && !filesystem::exists(desiredDetailsPath)) {
-                    try {
-                         filesystem::create_directories(desiredDetailsPath.parent_path());
-                         filesystem::rename(entry.path(), desiredDetailsPath);
-                    } catch (const std::exception&) {}
-                }
-                filesystem::path legacyPdf = pdf_path_internal(originalIdFromFilename);
-                filesystem::path desiredPdf = pdf_path_internal(book.id);
-                if (legacyPdf != desiredPdf &&  filesystem::exists(legacyPdf) && ! filesystem::exists(desiredPdf)) {
-                    try {
-                         filesystem::create_directories(desiredPdf.parent_path());
-                         filesystem::rename(legacyPdf, desiredPdf);
-                    } catch (const std::exception&) {}
-                }
                 try {
                     find_index_by_isbn(book.isbn);
                 } catch (const std::exception&) {
@@ -116,7 +98,6 @@ bool BookManager::load_from_disk() {
 bool BookManager::add_book(const Book& bookInput) {
     Book book = bookInput;
     book.isbn = normalize_isbn(book.isbn);
-    book.id = book.isbn;
 
     try {
         find_index_by_isbn(book.isbn);
@@ -131,7 +112,7 @@ bool BookManager::update_book_by_id(const string& id, const Book& updated) {
     size_t index = 0;
     string normalizedId = normalize_isbn(id);
     try {
-        index = find_index_by_id(normalizedId);
+        index = find_index_by_isbn(normalizedId);
     } catch (const std::exception&) {
         return false;
     }
@@ -139,7 +120,7 @@ bool BookManager::update_book_by_id(const string& id, const Book& updated) {
     string normalizedIsbn = normalize_isbn(updated.isbn);
     try {
         size_t isbnIndex = find_index_by_isbn(normalizedIsbn);
-        if (books[isbnIndex].id != id) {
+        if (books[isbnIndex].isbn != normalizedId) {
             return false;
         }
     } catch (const std::exception&) {
@@ -148,18 +129,17 @@ bool BookManager::update_book_by_id(const string& id, const Book& updated) {
 
     Book copy = updated;
     copy.isbn = normalizedIsbn;
-    copy.id = normalizedIsbn;
     books[index] = copy;
 
      filesystem::path oldDetails = details_path_for_id(normalizedId);
-     filesystem::path newDetails = details_path_for_id(copy.id);
+     filesystem::path newDetails = details_path_for_id(copy.isbn);
     bool saved = save_book_to_disk(copy);
     if (saved && oldDetails != newDetails &&  filesystem::exists(oldDetails)) {
          filesystem::remove(oldDetails);
     }
 
      filesystem::path oldPdf = pdf_path_internal(normalizedId);
-     filesystem::path newPdf = pdf_path_internal(copy.id);
+     filesystem::path newPdf = pdf_path_internal(copy.isbn);
     if (oldPdf != newPdf &&  filesystem::exists(oldPdf)) {
         try {
              filesystem::create_directories(newPdf.parent_path());
@@ -174,7 +154,7 @@ bool BookManager::remove_book_by_id(const string& id) {
     size_t index = 0;
     string normalizedId = normalize_isbn(id);
     try {
-        index = find_index_by_id(normalizedId);
+        index = find_index_by_isbn(normalizedId);
     } catch (const std::exception&) {
         return false;
     }
@@ -189,7 +169,7 @@ bool BookManager::remove_book_by_id(const string& id) {
 //nyari buku pake id
 const Book& BookManager::get_book_by_id(const string& id) const {
     string normalized = normalize_isbn(id);
-    size_t index = find_index_by_id(normalized);
+    size_t index = find_index_by_isbn(normalized);
     return books[index];
 }
 //nyari buku pake isbn
@@ -235,29 +215,19 @@ void BookManager::ensure_directories() const {
 
 bool BookManager::save_book_to_disk(const Book& book) const {
     ensure_directories();
-     filesystem::path path = details_path_for_id(book.id);
+     filesystem::path path = details_path_for_id(book.isbn);
      ofstream output(path);
     if (!output.is_open()) {
         return false;
     }
 
-    output << book.id << "|"
-           << book.isbn << "|"
+    output << book.isbn << "|"
            << book.title << "|"
            << book.author << "|"
            << book.publisher << "|"
            << book.publicationYear << "|"
            << book.stock << "\n";
     return true;
-}
-
-size_t BookManager::find_index_by_id(const string& id) const {
-    for (size_t i = 0; i < books.size(); ++i) {
-        if (books[i].id == id) {
-            return i;
-        }
-    }
-    throw std::runtime_error("Book not found by id: " + id);
 }
 
 size_t BookManager::find_index_by_isbn(const string& isbn) const {
