@@ -1,6 +1,5 @@
 #pragma once
 
-#include <optional>
 #include <string>
 #include <vector>
 #include <ctime>
@@ -28,8 +27,8 @@ public:
     explicit LoanRequestManager(BookManager& bookManager);
 
     const std::vector<LoanRequest>& list_requests() const;
-    std::optional<LoanRequest> find_by_id(int id) const;
-    LoanRequest* get_request(int id);
+    LoanRequest get_by_id(int id) const;
+    LoanRequest& get_request(int id);
 
     std::vector<LoanRequest> requests_for_user(const std::string& username) const;
     bool user_has_pending_for_book(const std::string& username, const std::string& bookId) const;
@@ -50,5 +49,5 @@ private:
     int nextId;
     std::vector<LoanRequest> requests;
 
-    LoanRequest* find_mutable(int id);
+    size_t find_index(int id) const;
 };

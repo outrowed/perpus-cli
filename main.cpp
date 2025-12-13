@@ -1,4 +1,3 @@
-#include <optional>
 #include <string>
 
 #include "app/admin_menu.h"
@@ -33,21 +32,16 @@ int main() {
 
         string choice = prompt_required("Choose: ");
         if (choice == "1") {
-            optional<string> loggedIn = login(session.accounts);
-            if (!loggedIn.has_value()) {
-                continue;
-            }
-
-            optional<Account> account = session.accounts.get_account(loggedIn.value());
-            if (!account.has_value()) {
-                println("Account no longer exists.");
-                continue;
-            }
-
-            if (account.value().role == Role::Admin) {
-                run_admin_menu(session);
-            } else {
-                run_user_menu(session, loggedIn.value());
+            try {
+                string loggedIn = login(session.accounts);
+                Account account = session.accounts.get_account(loggedIn);
+                if (account.role == Role::Admin) {
+                    run_admin_menu(session);
+                } else {
+                    run_user_menu(session, loggedIn);
+                }
+            } catch (const std::exception& ex) {
+                println(ex.what());
             }
         } else if (choice == "2") {
             bool created = register_account(session.accounts);

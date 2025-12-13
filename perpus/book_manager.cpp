@@ -5,6 +5,7 @@
 #include <fstream>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 
 using std::string;
 using std::vector;
@@ -97,56 +98,67 @@ bool BookManager::add_book(const Book& bookInput) {
         book.id = generate_id();
     }
 
-    if (find_const_by_id(book.id) != nullptr) {
+    try {
+        find_index_by_id(book.id);
         return false;
-    }
+    } catch (const std::exception&) {}
 
-    const Book* existingIsbn = get_book_by_isbn(book.isbn);
-    if (existingIsbn != nullptr) {
+    try {
+        find_index_by_isbn(book.isbn);
         return false;
-    }
+    } catch (const std::exception&) {}
 
     books.push_back(book);
     return save_book_to_disk(book);
 }
 //update buku make id
 bool BookManager::update_book_by_id(const string& id, const Book& updated) {
-    Book* existing = find_mutable_by_id(id);
-    if (existing == nullptr) {
+    size_t index = 0;
+    try {
+        index = find_index_by_id(id);
+    } catch (const std::exception&) {
         return false;
     }
-//
-    const Book* sameIsbn = get_book_by_isbn(updated.isbn);
-    if (sameIsbn != nullptr && sameIsbn->id != id) {
-        return false;
+
+    try {
+        size_t isbnIndex = find_index_by_isbn(updated.isbn);
+        if (books[isbnIndex].id != id) {
+            return false;
+        }
+    } catch (const std::exception&) {
+        // If not found, it's fine to proceed.
     }
-//salin data dari updated ke exisiting
+
     Book copy = updated;
     copy.id = id;
-    *existing = copy;
+    books[index] = copy;
     return save_book_to_disk(copy);
 }
 //hapus buku make id
 bool BookManager::remove_book_by_id(const string& id) {
-    for (vector<Book>::iterator it = books.begin(); it != books.end(); ++it) {
-        if (it->id == id) {
-            books.erase(it);
-             filesystem::path detailsFile = details_path_for_id(id);
-            if ( filesystem::exists(detailsFile)) {
-                 filesystem::remove(detailsFile);
-            }
-            return true;
-        }
+    size_t index = 0;
+    try {
+        index = find_index_by_id(id);
+    } catch (const std::exception&) {
+        return false;
     }
-    return false;
+
+    books.erase(books.begin() + index);
+     filesystem::path detailsFile = details_path_for_id(id);
+    if ( filesystem::exists(detailsFile)) {
+         filesystem::remove(detailsFile);
+    }
+    return true;
 }
 //nyari buku pake id
-const Book* BookManager::get_book_by_id(const string& id) const {
-    return find_const_by_id(id);
+const Book& BookManager::get_book_by_id(const string& id) const {
+    size_t index = find_index_by_id(id);
+    return books[index];
 }
 //nyari buku pake isbn
-const Book* BookManager::get_book_by_isbn(const string& isbn) const {
-    return find_const_by_isbn(isbn);
+const Book& BookManager::get_book_by_isbn(const string& isbn) const {
+    size_t index = find_index_by_isbn(isbn);
+    return books[index];
 }
 //path detail buku
 string BookManager::pdf_path_for_id(const string& id) const {
@@ -205,29 +217,20 @@ bool BookManager::save_book_to_disk(const Book& book) const {
     return true;
 }
 
-Book* BookManager::find_mutable_by_id(const string& id) {
-    for (vector<Book>::iterator it = books.begin(); it != books.end(); ++it) {
-        if (it->id == id) {
-            return &(*it);
+size_t BookManager::find_index_by_id(const string& id) const {
+    for (size_t i = 0; i < books.size(); ++i) {
+        if (books[i].id == id) {
+            return i;
         }
     }
-    return nullptr;
+    throw std::runtime_error("Book not found by id: " + id);
 }
 
-const Book* BookManager::find_const_by_id(const string& id) const {
-    for (vector<Book>::const_iterator it = books.begin(); it != books.end(); ++it) {
-        if (it->id == id) {
-            return &(*it);
+size_t BookManager::find_index_by_isbn(const string& isbn) const {
+    for (size_t i = 0; i < books.size(); ++i) {
+        if (books[i].isbn == isbn) {
+            return i;
         }
     }
-    return nullptr;
-}
-
-const Book* BookManager::find_const_by_isbn(const string& isbn) const {
-    for (vector<Book>::const_iterator it = books.begin(); it != books.end(); ++it) {
-        if (it->isbn == isbn) {
-            return &(*it);
-        }
-    }
-    return nullptr;
+    throw std::runtime_error("Book not found by isbn: " + isbn);
 }

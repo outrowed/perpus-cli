@@ -1,9 +1,9 @@
 #include "menu_helpers.h"
 
-#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 std::string role_to_string(Role role) {
     if (role == Role::Admin) {
@@ -12,7 +12,7 @@ std::string role_to_string(Role role) {
     return "User";
 }
 
-std::optional<Role> parse_role(const std::string& raw) {
+Role parse_role(const std::string& raw) {
     auto to_lower_ascii = [](char c) {
         if (c >= 'A' && c <= 'Z') {
             char lower = 'a' + (c - 'A');
@@ -32,7 +32,7 @@ std::optional<Role> parse_role(const std::string& raw) {
     if (lower == "user") {
         return Role::User;
     }
-    return std::nullopt;
+    throw std::runtime_error("Please choose between admin or user.");
 }
 
 int prompt_int_with_default(const std::string& message, int currentValue) {
@@ -68,11 +68,11 @@ void show_book_list(const BookManager& manager) {
 }
 
 void print_request_card(const LoanRequest& request, const BookManager& manager) {
-    const Book* book = manager.get_book_by_id(request.bookId);
     std::string title = "Unknown book";
-    if (book != nullptr) {
-        title = book->title;
-    }
+    try {
+        const Book& book = manager.get_book_by_id(request.bookId);
+        title = book.title;
+    } catch (const std::exception&) {}
 
     std::cout << "#" << request.id << " [" << LoanRequestManager::status_label(request.status) << "] "
               << title << " (" << request.bookId << ") requested by " << request.username

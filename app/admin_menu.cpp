@@ -3,7 +3,7 @@
 // Implements admin flows: book management, request approvals, and account maintenance.
 
 #include <iostream>
-#include <optional>
+#include <exception>
 
 #include "../util/prompt.h"
 #include "../util/print.h"
@@ -15,11 +15,11 @@ static void admin_add_book(BookManager& manager) {
     println("\n=== Add Book ===");
     Book book;
     book.isbn = prompt_required("ISBN: ");
-    const Book* existingIsbn = manager.get_book_by_isbn(book.isbn);
-    if (existingIsbn != nullptr) {
+    try {
+        manager.get_book_by_isbn(book.isbn);
         println("A book with that ISBN already exists.");
         return;
-    }
+    } catch (const std::exception&) {}
 
     book.title = prompt_required("Title: ");
     book.author = prompt_required("Author: ");
@@ -29,12 +29,12 @@ static void admin_add_book(BookManager& manager) {
 
     bool added = manager.add_book(book);
     if (added) {
-        const Book* stored = manager.get_book_by_isbn(book.isbn);
-        if (stored != nullptr) {
-            ensure_pdf_placeholder(manager, *stored);
-            std::cout << "Book added with ID: " << stored->id << "\n";
-            std::cout << "Place the PDF at: " << manager.pdf_path_for_id(stored->id) << "\n";
-        }
+        try {
+            const Book& stored = manager.get_book_by_isbn(book.isbn);
+            ensure_pdf_placeholder(manager, stored);
+            std::cout << "Book added with ID: " << stored.id << "\n";
+            std::cout << "Place the PDF at: " << manager.pdf_path_for_id(stored.id) << "\n";
+        } catch (const std::exception&) {}
     } else {
         println("Failed to add book.");
     }
@@ -48,19 +48,24 @@ static void admin_edit_book(BookManager& manager) {
 
     show_book_list(manager);
     std::string id = prompt_required("Enter book ID to edit: ");
-    const Book* existing = manager.get_book_by_id(id);
-    if (existing == nullptr) {
+    Book updated;
+    try {
+        updated = manager.get_book_by_id(id);
+    } catch (const std::exception&) {
         println("Book not found.");
         return;
     }
 
-    Book updated = *existing;
     std::string newIsbn = prompt("New ISBN (leave blank to keep current): ");
-    if (!newIsbn.empty() && newIsbn != existing->isbn) {
-        const Book* isbnCheck = manager.get_book_by_isbn(newIsbn);
-        if (isbnCheck != nullptr && isbnCheck->id != id) {
-            println("Another book already uses that ISBN.");
-            return;
+    if (!newIsbn.empty() && newIsbn != updated.isbn) {
+        try {
+            const Book& isbnCheck = manager.get_book_by_isbn(newIsbn);
+            if (isbnCheck.id != id) {
+                println("Another book already uses that ISBN.");
+                return;
+            }
+        } catch (const std::exception&) {
+            // Not found, ok to update.
         }
         updated.isbn = newIsbn;
     }
@@ -129,7 +134,9 @@ static void admin_edit_account(Session& session) {
 
     list_accounts(accountManager);
     std::string username = prompt_required("Username to edit: ");
-    if (!accountManager.get_account(username).has_value()) {
+    try {
+        accountManager.get_account(username);
+    } catch (const std::exception&) {
         println("User not found.");
         return;
     }
@@ -165,14 +172,16 @@ static void admin_edit_account(Session& session) {
             }
         } else if (choice == "3") {
             std::string roleText = prompt_required("Role (admin/user): ");
-            std::optional<Role> parsed = parse_role(roleText);
-            if (!parsed.has_value()) {
-                println("Please choose between admin or user.");
-            } else if (accountManager.update_role(current, parsed.value())) {
-                println("Role updated.");
-                save_accounts(session);
-            } else {
-                println("Failed to update role.");
+            try {
+                Role parsed = parse_role(roleText);
+                if (accountManager.update_role(current, parsed)) {
+                    println("Role updated.");
+                    save_accounts(session);
+                } else {
+                    println("Failed to update role.");
+                }
+            } catch (const std::exception& ex) {
+                println(ex.what());
             }
         } else if (choice == "0") {
             return;
@@ -237,8 +246,10 @@ static void admin_review_requests(Session& session) {
         return;
     }
 
-    std::optional<LoanRequest> req = loanManager.find_by_id(id);
-    if (!req.has_value()) {
+    LoanRequest req;
+    try {
+        req = loanManager.get_by_id(id);
+    } catch (const std::exception&) {
         println("Request not found.");
         return;
     }
@@ -248,13 +259,19 @@ static void admin_review_requests(Session& session) {
     println("0. Back");
     std::string choice = prompt_required("Choose: ");
     if (choice == "1") {
-        loanManager.set_status(id, LoanStatus::Approved);
-        println("Request approved.");
-        save_loans(session);
+        if (loanManager.set_status(id, LoanStatus::Approved)) {
+            println("Request approved.");
+            save_loans(session);
+        } else {
+            println("Failed to update request.");
+        }
     } else if (choice == "2") {
-        loanManager.set_status(id, LoanStatus::Rejected);
-        println("Request rejected.");
-        save_loans(session);
+        if (loanManager.set_status(id, LoanStatus::Rejected)) {
+            println("Request rejected.");
+            save_loans(session);
+        } else {
+            println("Failed to update request.");
+        }
     } else if (choice == "0") {
         return;
     } else {

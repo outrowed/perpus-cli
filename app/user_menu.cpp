@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <iostream>
 #include <cstdlib>
+#include <exception>
 
 #include "../util/prompt.h"
 #include "../util/print.h"
@@ -35,8 +36,9 @@ static void read_book(BookManager& manager) {
 
     show_book_list(manager);
     std::string id = prompt_required("Enter book ID to read: ");
-    const Book* book = manager.get_book_by_id(id);
-    if (book == nullptr) {
+    try {
+        manager.get_book_by_id(id);
+    } catch (const std::exception&) {
         println("Book not found.");
         return;
     }
@@ -65,8 +67,9 @@ static void request_loan(Session& session, const std::string& username) {
 
     show_book_list(manager);
     std::string id = prompt_required("Enter book ID to request: ");
-    const Book* book = manager.get_book_by_id(id);
-    if (book == nullptr) {
+    try {
+        manager.get_book_by_id(id);
+    } catch (const std::exception&) {
         println("Book not found.");
         return;
     }
@@ -93,11 +96,11 @@ static void view_requests(const LoanRequestManager& loanManager, const BookManag
     println("\n=== Your Loan Requests ===");
     for (size_t i = 0; i < requests.size(); ++i) {
         const LoanRequest& req = requests[i];
-        const Book* book = manager.get_book_by_id(req.bookId);
         std::string title = "Unknown book";
-        if (book != nullptr) {
-            title = book->title;
-        }
+        try {
+            const Book& book = manager.get_book_by_id(req.bookId);
+            title = book.title;
+        } catch (const std::exception&) {}
         std::cout << "#" << req.id << " [" << LoanRequestManager::status_label(req.status) << "] "
                   << title << " (" << req.bookId << ") on " << LoanRequestManager::human_date(req.requestedAt) << "\n";
     }
@@ -161,11 +164,11 @@ static void return_book(Session& session, const std::string& username) {
     for (std::size_t i = 0; i < requests.size(); ++i) {
         const LoanRequest& req = requests[i];
         if (req.status == LoanStatus::Approved) {
-            const Book* book = session.books.get_book_by_id(req.bookId);
             std::string title = "Unknown book";
-            if (book != nullptr) {
-                title = book->title;
-            }
+            try {
+                const Book& book = session.books.get_book_by_id(req.bookId);
+                title = book.title;
+            } catch (const std::exception&) {}
             std::cout << "#" << req.id << " " << title << " (" << req.bookId << ")\n";
         }
     }
@@ -178,12 +181,18 @@ static void return_book(Session& session, const std::string& username) {
         return;
     }
 
-    LoanRequest* req = session.loans.get_request(id);
-    if (req == nullptr || req->username != username) {
+    LoanRequest req;
+    try {
+        req = session.loans.get_request(id);
+    } catch (const std::exception&) {
         println("Request not found for your account.");
         return;
     }
-    if (req->status != LoanStatus::Approved) {
+    if (req.username != username) {
+        println("Request not found for your account.");
+        return;
+    }
+    if (req.status != LoanStatus::Approved) {
         println("Only approved requests can be returned.");
         return;
     }

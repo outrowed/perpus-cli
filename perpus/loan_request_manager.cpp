@@ -3,6 +3,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <stdexcept>
 
 #include "book_manager.h"
 
@@ -29,26 +30,14 @@ const vector<LoanRequest>& LoanRequestManager::list_requests() const {
     return requests;
 }
 
-std::optional<LoanRequest> LoanRequestManager::find_by_id(int id) const {
-    for (vector<LoanRequest>::const_iterator it = requests.begin(); it != requests.end(); ++it) {
-        if (it->id == id) {
-            return *it;
-        }
-    }
-    return std::nullopt;
+LoanRequest LoanRequestManager::get_by_id(int id) const {
+    size_t index = find_index(id);
+    return requests[index];
 }
 
-LoanRequest* LoanRequestManager::find_mutable(int id) {
-    for (vector<LoanRequest>::iterator it = requests.begin(); it != requests.end(); ++it) {
-        if (it->id == id) {
-            return &(*it);
-        }
-    }
-    return nullptr;
-}
-
-LoanRequest* LoanRequestManager::get_request(int id) {
-    return find_mutable(id);
+LoanRequest& LoanRequestManager::get_request(int id) {
+    size_t index = find_index(id);
+    return requests[index];
 }
 
 std::vector<LoanRequest> LoanRequestManager::requests_for_user(const std::string& username) const {
@@ -71,8 +60,9 @@ bool LoanRequestManager::user_has_pending_for_book(const std::string& username, 
 }
 
 bool LoanRequestManager::create_request(const std::string& username, const std::string& bookId) {
-    const Book* book = bookManager.get_book_by_id(bookId);
-    if (book == nullptr) {
+    try {
+        bookManager.get_book_by_id(bookId);
+    } catch (const std::exception&) {
         return false;
     }
     if (user_has_pending_for_book(username, bookId)) {
@@ -83,7 +73,7 @@ bool LoanRequestManager::create_request(const std::string& username, const std::
     request.id = nextId++;
     request.username = username;
     request.bookId = bookId;
-    request.requestedAt = std::time(nullptr);
+    request.requestedAt = std::time(0);
     request.status = LoanStatus::Pending;
 
     requests.push_back(request);
@@ -91,12 +81,13 @@ bool LoanRequestManager::create_request(const std::string& username, const std::
 }
 
 bool LoanRequestManager::set_status(int id, LoanStatus status) {
-    LoanRequest* request = find_mutable(id);
-    if (request == nullptr) {
+    try {
+        LoanRequest& request = get_request(id);
+        request.status = status;
+        return true;
+    } catch (const std::exception&) {
         return false;
     }
-    request->status = status;
-    return true;
 }
 
 void LoanRequestManager::rename_user_requests(const std::string& oldUsername, const std::string& newUsername) {
@@ -133,4 +124,13 @@ void LoanRequestManager::set_next_id(int next) {
     } else {
         nextId = 1;
     }
+}
+
+size_t LoanRequestManager::find_index(int id) const {
+    for (size_t i = 0; i < requests.size(); ++i) {
+        if (requests[i].id == id) {
+            return i;
+        }
+    }
+    throw std::runtime_error("Loan request not found: " + std::to_string(id));
 }

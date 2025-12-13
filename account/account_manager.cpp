@@ -1,6 +1,7 @@
 #include "account_manager.h"
 
 #include "bcrypt_cpp.h"
+#include <stdexcept>
 
 using std::string;
 using std::string_view;
@@ -13,27 +14,27 @@ const vector<Account>& AccountManager::list_accounts() const {
 }
 
 bool AccountManager::username_exists(string_view username) const {
-    return find_const(username) != nullptr;
+    for (vector<Account>::const_iterator it = accounts.begin(); it != accounts.end(); ++it) {
+        if (it->username == username) {
+            return true;
+        }
+    }
+    return false;
 }
 
-std::optional<Account> AccountManager::get_account(string_view username) const {
-    const Account* account = find_const(username);
-    if (account != nullptr) {
-        return *account;
-    }
-    return std::nullopt;
+Account AccountManager::get_account(string_view username) const {
+    size_t index = find_index(username);
+    return accounts[index];
 }
 
-std::pair<LoginResult, Account*> AccountManager::authenticate(string_view username, string_view password) {
-    Account* account = find_mutable(username);
-    if (account == nullptr) {
-        return std::make_pair(LoginResult::UserNotFound, nullptr);
-    }
-    bool passwordOk = bcrypt::validatePassword(string(password), account->passwordHash);
+Account AccountManager::authenticate(string_view username, string_view password) {
+    size_t index = find_index(username);
+    Account& account = accounts[index];
+    bool passwordOk = bcrypt::validatePassword(string(password), account.passwordHash);
     if (!passwordOk) {
-        return std::make_pair(LoginResult::InvalidPassword, nullptr);
+        throw std::runtime_error("Invalid password.");
     }
-    return std::make_pair(LoginResult::Success, account);
+    return account;
 }
 
 bool AccountManager::create_account(string username, string password, Role role) {
@@ -52,29 +53,38 @@ bool AccountManager::update_username(string_view currentUsername, string newUser
     if (username_exists(newUsername)) {
         return false;
     }
-    Account* account = find_mutable(currentUsername);
-    if (account == nullptr) {
+    size_t index = 0;
+    try {
+        index = find_index(currentUsername);
+    } catch (const std::exception&) {
         return false;
     }
-    account->username = newUsername;
+
+    accounts[index].username = newUsername;
     return true;
 }
 
 bool AccountManager::update_password(string_view username, string newPassword) {
-    Account* account = find_mutable(username);
-    if (account == nullptr) {
+    size_t index = 0;
+    try {
+        index = find_index(username);
+    } catch (const std::exception&) {
         return false;
     }
-    account->passwordHash = bcrypt::generateHash(newPassword);
+
+    accounts[index].passwordHash = bcrypt::generateHash(newPassword);
     return true;
 }
 
 bool AccountManager::update_role(string_view username, Role newRole) {
-    Account* account = find_mutable(username);
-    if (account == nullptr) {
+    size_t index = 0;
+    try {
+        index = find_index(username);
+    } catch (const std::exception&) {
         return false;
     }
-    account->role = newRole;
+
+    accounts[index].role = newRole;
     return true;
 }
 
@@ -86,20 +96,11 @@ void AccountManager::add_account_raw(const Account& account) {
     accounts.push_back(account);
 }
 
-Account* AccountManager::find_mutable(string_view username) {
-    for (vector<Account>::iterator it = accounts.begin(); it != accounts.end(); ++it) {
-        if (it->username == username) {
-            return &(*it);
+size_t AccountManager::find_index(string_view username) const {
+    for (size_t i = 0; i < accounts.size(); ++i) {
+        if (accounts[i].username == username) {
+            return i;
         }
     }
-    return nullptr;
-}
-
-const Account* AccountManager::find_const(string_view username) const {
-    for (vector<Account>::const_iterator it = accounts.begin(); it != accounts.end(); ++it) {
-        if (it->username == username) {
-            return &(*it);
-        }
-    }
-    return nullptr;
+    throw std::runtime_error("Account not found: " + string(username));
 }

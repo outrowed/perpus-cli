@@ -35,12 +35,12 @@ void seed_sample_data(Session& session) {
     session.books.add_book(sample1);
     session.books.add_book(sample2);
 
-    const Book* added1 = session.books.get_book_by_isbn(sample1.isbn);
-    if (added1 != nullptr) {
-        ensure_pdf_placeholder(session.books, *added1);
-    }
-    const Book* added2 = session.books.get_book_by_isbn(sample2.isbn);
-    if (added2 != nullptr) {
-        ensure_pdf_placeholder(session.books, *added2);
-    }
+    try {
+        const Book& added1 = session.books.get_book_by_isbn(sample1.isbn);
+        ensure_pdf_placeholder(session.books, added1);
+    } catch (const std::exception&) {}
+    try {
+        const Book& added2 = session.books.get_book_by_isbn(sample2.isbn);
+        ensure_pdf_placeholder(session.books, added2);
+    } catch (const std::exception&) {}
 }

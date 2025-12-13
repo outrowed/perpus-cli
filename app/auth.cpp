@@ -6,22 +6,14 @@
 #include "../util/print.h"
 #include "menu_helpers.h"
 
-std::optional<std::string> login(AccountManager& accountManager) {
+std::string login(AccountManager& accountManager) {
     println("\n=== Login ===");
     std::string username = prompt_required("Username: ");
     std::string password = prompt_required("Password: ");
 
-    std::pair<LoginResult, Account*> result = accountManager.authenticate(username, password);
-    if (result.first == LoginResult::Success && result.second != nullptr) {
-        std::cout << "Welcome, " << result.second->username << " (" << role_to_string(result.second->role) << ")\n";
-        return result.second->username;
-    }
-    if (result.first == LoginResult::InvalidPassword) {
-        println("Invalid password.");
-    } else {
-        println("User not found.");
-    }
-    return std::nullopt;
+    Account account = accountManager.authenticate(username, password);
+    std::cout << "Welcome, " << account.username << " (" << role_to_string(account.role) << ")\n";
+    return account.username;
 }
 
 bool register_account(AccountManager& accountManager) {

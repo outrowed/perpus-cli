@@ -25,8 +25,8 @@ public:
     bool update_book_by_id(const  string& id, const Book& updated);
     bool remove_book_by_id(const  string& id);
 
-    const Book* get_book_by_id(const  string& id) const;
-    const Book* get_book_by_isbn(const  string& isbn) const;
+    const Book& get_book_by_id(const  string& id) const;
+    const Book& get_book_by_isbn(const  string& isbn) const;
 
      string pdf_path_for_id(const  string& id) const;
     bool book_exists_on_disk(const  string& id) const;
@@ -41,7 +41,6 @@ private:
     void ensure_directories() const;
     bool save_book_to_disk(const Book& book) const;
 
-    Book* find_mutable_by_id(const  string& id);
-    const Book* find_const_by_id(const  string& id) const;
-    const Book* find_const_by_isbn(const  string& isbn) const;
+    size_t find_index_by_id(const  string& id) const;
+    size_t find_index_by_isbn(const  string& isbn) const;
 };
