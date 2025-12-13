@@ -9,7 +9,7 @@
 #include "app/user_menu.h"
 #include "util/prompt.h"
 #include "util/print.h"
-
+using namespace std;
 int main() {
     println(
         "==========================================\n"
@@ -31,14 +31,14 @@ int main() {
         println("2. Create account");
         println("0. Exit");
 
-        std::string choice = prompt_required("Choose: ");
+        string choice = prompt_required("Choose: ");
         if (choice == "1") {
-            std::optional<std::string> loggedIn = login(session.accounts);
+            optional<string> loggedIn = login(session.accounts);
             if (!loggedIn.has_value()) {
                 continue;
             }
 
-            std::optional<Account> account = session.accounts.get_account(loggedIn.value());
+            optional<Account> account = session.accounts.get_account(loggedIn.value());
             if (!account.has_value()) {
                 println("Account no longer exists.");
                 continue;
