@@ -1,7 +1,6 @@
 
 #include "book_manager.h"
 
-#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <random>
@@ -11,82 +10,36 @@ using std::string;
 using std::vector;
 
 namespace {
-    bool is_space_char(char c) {
-        unsigned char uc = c;
-        return  isspace(uc) != 0;
-    }
+// Parse a pipe-separated book record: id|isbn|title|author|publisher|year|stock
+    bool parse_book_record(const string& line, Book& out) {
+         istringstream iss(line);
+        vector<string> parts;
+        string part;
+        while (getline(iss, part, '|')) {
+            parts.push_back(part);
+        }
 
-    bool is_digit_char(char c) {
-        unsigned char uc = c;
-        return  isdigit(uc) != 0;
-    }
-//baca file jd string
-    string read_file_to_string(const string& path) {
-         ifstream input(path);
-         ostringstream buffer;
-        if (input.is_open()) {//baca isi file
-            buffer << input.rdbuf();
+        if (parts.size() < 7) {
+            return false;
         }
-        return buffer.str();
-    }
-//ngilangin spais
-    string trim_copy(const string& text) {
-        size_t start = 0;
-        size_t end = text.length();
-        while (start < end && is_space_char(text[start])) {
-            start++;
+
+        out.id = parts[0];
+        out.isbn = parts[1];
+        out.title = parts[2];
+        out.author = parts[3];
+        out.publisher = parts[4];
+
+         istringstream yearStream(parts[5]);
+        if (!(yearStream >> out.publicationYear)) {
+            out.publicationYear = 0;
         }
-        while (end > start && is_space_char(text[end - 1])) {
-            end--;
+
+         istringstream stockStream(parts[6]);
+        if (!(stockStream >> out.stock)) {
+            out.stock = 0;
         }
-        return text.substr(start, end - start);
-    }
-//ngambil string dari json
-    string extract_json_value(const string& content, const string& key) {
-        string needle = "\"" + key + "\"";
-        size_t pos = content.find(needle);
-        if (pos == string::npos) {
-            return "";
-        }
-        size_t colon = content.find(':', pos);
-        if (colon == string::npos) {
-            return "";
-        }
-        size_t firstQuote = content.find('"', colon + 1);
-        if (firstQuote == string::npos) {
-            return "";
-        }
-        size_t secondQuote = content.find('"', firstQuote + 1);
-        if (secondQuote == string::npos || secondQuote <= firstQuote + 1) {
-            return "";
-        }
-        string value = content.substr(firstQuote + 1, secondQuote - firstQuote - 1);
-        return value;
-    }
-//ngambil int dari json
-    int extract_json_int(const string& content, const string& key) {
-        string needle = "\"" + key + "\"";
-        size_t pos = content.find(needle);
-        if (pos == string::npos) {
-            return 0;
-        }
-        size_t colon = content.find(':', pos);
-        if (colon == string::npos) {
-            return 0;
-        }
-        size_t start = colon + 1;
-        while (start < content.size() && is_space_char(content[start])) {
-            start++;
-        }
-        size_t end = start;
-        while (end < content.size() && (is_digit_char(content[end]) || content[end] == '-')) {
-            end++;
-        }
-        string value = content.substr(start, end - start);
-         istringstream iss(value);
-        int result = 0;
-        iss >> result;
-        return result;
+
+        return !out.id.empty();
     }
 }
 //impleentasi manager buku
@@ -119,26 +72,20 @@ bool BookManager::load_from_disk() {
             continue;
         }
         string extension = entry.path().extension().string(); //cek ekstensi filenya
-        if (extension != ".json") {
+        if (extension != ".csv") {
             continue;
         }
-        string content = read_file_to_string(entry.path().string()); //baca file
-        content = trim_copy(content);
-        if (content.empty()) {
+         ifstream input(entry.path());
+        if (!input.is_open()) {
             continue;
         }
-//Data buku
-        Book book;
-        book.id = extract_json_value(content, "id");
-        book.isbn = extract_json_value(content, "isbn");
-        book.title = extract_json_value(content, "title");
-        book.author = extract_json_value(content, "author");
-        book.publisher = extract_json_value(content, "publisher");
-        book.publicationYear = extract_json_int(content, "publicationYear");
-        book.stock = extract_json_int(content, "stock");
 
-        if (!book.id.empty()) {
-            books.push_back(book);
+        string line;
+        if (getline(input, line)) {
+            Book book;
+            if (parse_book_record(line, book)) {
+                books.push_back(book);
+            }
         }
     }
     return true;
@@ -225,7 +172,7 @@ string BookManager::generate_id() const {
 //naro detail buku
 string BookManager::details_path_for_id(const string& id) const {
      filesystem::path base(config.detailsDirectory);
-    base /= id + ".json";
+    base /= id + ".csv";
     return base.string();
 }
 //naro buku pdf
@@ -248,15 +195,13 @@ bool BookManager::save_book_to_disk(const Book& book) const {
         return false;
     }
 
-    output << "{\n";
-    output << "  \"ID\": \"" << book.id << "\",\n";
-    output << "  \"ISBN\": \"" << book.isbn << "\",\n";
-    output << "  \"Judul\": \"" << book.title << "\",\n";
-    output << "  \"Pengarang\": \"" << book.author << "\",\n";
-    output << "  \"Penerbit\": \"" << book.publisher << "\",\n";
-    output << "  \"TahunTerbit\": " << book.publicationYear << ",\n";
-    output << "  \"Jumlah\": " << book.stock << "\n";
-    output << "}\n";
+    output << book.id << "|"
+           << book.isbn << "|"
+           << book.title << "|"
+           << book.author << "|"
+           << book.publisher << "|"
+           << book.publicationYear << "|"
+           << book.stock << "\n";
     return true;
 }
 

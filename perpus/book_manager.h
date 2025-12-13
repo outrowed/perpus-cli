@@ -11,7 +11,7 @@ struct BookStorageConfig {
      string pdfDirectory;
 };
 
-// Handles in-memory book list plus disk persistence to details/<id>.json and pdf/<id>.pdf paths.
+// Handles in-memory book list plus disk persistence to pipe-separated details/<id>.csv and pdf/<id>.pdf paths.
 class BookManager {
 public:
     BookManager();
