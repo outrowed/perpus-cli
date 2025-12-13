@@ -4,11 +4,28 @@
 
 #include <filesystem>
 #include <iostream>
+#include <cstdlib>
 
 #include "../util/prompt.h"
 #include "../util/print.h"
 #include "menu_helpers.h"
 #include "session.h"
+
+// Open a PDF path with the platform's default application/browser.
+static bool open_pdf_with_default_app(const std::string& path) {
+    if (!std::filesystem::exists(path)) {
+        return false;
+    }
+
+#ifdef _WIN32
+    std::string command = "start \"\" \"" + path + "\"";
+#elif __APPLE__
+    std::string command = "open \"" + path + "\"";
+#else
+    std::string command = "xdg-open \"" + path + "\"";
+#endif
+    return std::system(command.c_str()) == 0;
+}
 
 static void read_book(BookManager& manager) {
     if (!manager.has_books()) {
@@ -26,10 +43,15 @@ static void read_book(BookManager& manager) {
 
     std::string pdfPath = manager.pdf_path_for_id(id);
     std::cout << "PDF path: " << pdfPath << "\n";
-    if (std::filesystem::exists(pdfPath)) {
-        println("Open the file in your preferred PDF reader.");
-    } else {
+    if (!std::filesystem::exists(pdfPath)) {
         println("PDF file not found. Place it at the path above.");
+        return;
+    }
+
+    if (open_pdf_with_default_app(pdfPath)) {
+        println("Opening PDF with your default application...");
+    } else {
+        println("Could not open the PDF automatically. Open it manually using the path above.");
     }
 }
 
@@ -176,7 +198,7 @@ void run_user_menu(Session& session, const std::string& usernameInput) {
     while (true) {
         println("\n=== User Menu ===");
         println("1. Browse library");
-        println("2. Read a book (view PDF path)");
+        println("2. Read a book (open PDF)");
         println("3. Request to loan a book");
         println("4. Check loan request status");
         println("5. Return a book (mark approved request as returned)");
