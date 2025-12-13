@@ -1,54 +1,136 @@
-#pragma once
+#include "loan_request_manager.h"
 
-#include <optional>
-#include <string>
-#include <vector>
 #include <ctime>
+#include <iomanip>
+#include <sstream>
 
-class BookManager;
+#include "book_manager.h"
+using namespace std;
+using  string;
+using  vector;
 
-enum class LoanStatus {
-    Pending,
-    Approved,
-    Rejected,
-    Returned
-};
+namespace {
+    // Simple helpers to map status to string and parse time formatting.
+    string status_to_string_internal(LoanStatus status) {
+        switch (status) {
+            case LoanStatus::Pending: return "Pending";
+            case LoanStatus::Approved: return "Approved";
+            case LoanStatus::Rejected: return "Rejected";
+            case LoanStatus::Returned: return "Returned";
+        }
+        return "Unknown";
+    }
+}
 
-struct LoanRequest {
-    int id;
-    std::string username;
-    std::string bookId;
-    std::time_t requestedAt;
-    LoanStatus status;
-};
+LoanRequestManager::LoanRequestManager(BookManager& manager)
+    : bookManager(manager), nextId(1) {}
 
-// Tracks loan requests in memory and coordinates status changes.
-class LoanRequestManager {
-public:
-    explicit LoanRequestManager(BookManager& bookManager);
+const vector<LoanRequest>& LoanRequestManager::list_requests() const {
+    return requests;
+}
 
-    const std::vector<LoanRequest>& list_requests() const;
-    std::optional<LoanRequest> find_by_id(int id) const;
-    LoanRequest* get_request(int id);
+ optional<LoanRequest> LoanRequestManager::find_by_id(int id) const {
+    for (vector<LoanRequest>::const_iterator it = requests.begin(); it != requests.end(); ++it) {
+        if (it->id == id) {
+            return *it;
+        }
+    }
+    return  nullopt;
+}
 
-    std::vector<LoanRequest> requests_for_user(const std::string& username) const;
-    bool user_has_pending_for_book(const std::string& username, const std::string& bookId) const;
+LoanRequest* LoanRequestManager::find_mutable(int id) {
+    for (vector<LoanRequest>::iterator it = requests.begin(); it != requests.end(); ++it) {
+        if (it->id == id) {
+            return &(*it);
+        }
+    }
+    return nullptr;
+}
 
-    bool create_request(const std::string& username, const std::string& bookId);
-    bool set_status(int id, LoanStatus status);
-    void rename_user_requests(const std::string& oldUsername, const std::string& newUsername);
+LoanRequest* LoanRequestManager::get_request(int id) {
+    return find_mutable(id);
+}
 
-    static std::string human_date(std::time_t time);
-    static std::string status_label(LoanStatus status);
+ vector<LoanRequest> LoanRequestManager::requests_for_user(const  string& username) const {
+    vector<LoanRequest> result;
+    for (vector<LoanRequest>::const_iterator it = requests.begin(); it != requests.end(); ++it) {
+        if (it->username == username) {
+            result.push_back(*it);
+        }
+    }
+    return result;
+}
 
-    void clear();
-    void add_request_raw(const LoanRequest& request);
-    void set_next_id(int next);
+bool LoanRequestManager::user_has_pending_for_book(const  string& username, const  string& bookId) const {
+    for (vector<LoanRequest>::const_iterator it = requests.begin(); it != requests.end(); ++it) {
+        if (it->username == username && it->bookId == bookId && it->status == LoanStatus::Pending) {
+            return true;
+        }
+    }
+    return false;
+}
 
-private:
-    BookManager& bookManager;
-    int nextId;
-    std::vector<LoanRequest> requests;
+bool LoanRequestManager::create_request(const  string& username, const  string& bookId) {
+    const Book* book = bookManager.get_book_by_id(bookId);
+    if (book == nullptr) {
+        return false;
+    }
+    if (user_has_pending_for_book(username, bookId)) {
+        return false;
+    }
 
-    LoanRequest* find_mutable(int id);
-};
+    LoanRequest request;
+    request.id = nextId++;
+    request.username = username;
+    request.bookId = bookId;
+    request.requestedAt =  time(nullptr);
+    request.status = LoanStatus::Pending;
+
+    requests.push_back(request);
+    return true;
+}
+
+bool LoanRequestManager::set_status(int id, LoanStatus status) {
+    LoanRequest* request = find_mutable(id);
+    if (request == nullptr) {
+        return false;
+    }
+    request->status = status;
+    return true;
+}
+
+void LoanRequestManager::rename_user_requests(const  string& oldUsername, const  string& newUsername) {
+    for (vector<LoanRequest>::iterator it = requests.begin(); it != requests.end(); ++it) {
+        if (it->username == oldUsername) {
+            it->username = newUsername;
+        }
+    }
+}
+
+ string LoanRequestManager::human_date( time_t time) {
+     ostringstream oss;
+     tm tm = * localtime(&time);
+    oss <<  put_time(&tm, "%Y-%m-%d");
+    return oss.str();
+}
+
+ string LoanRequestManager::status_label(LoanStatus status) {
+    return status_to_string_internal(status);
+}
+
+void LoanRequestManager::clear() {
+    requests.clear();
+    nextId = 1;
+}
+
+void LoanRequestManager::add_request_raw(const LoanRequest& request) {
+    requests.push_back(request);
+}
+
+void LoanRequestManager::set_next_id(int next) {
+    if (next > 1) {
+        nextId = next;
+    } else {
+        nextId = 1;
+    }
+}
