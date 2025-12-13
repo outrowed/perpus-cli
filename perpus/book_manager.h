@@ -4,11 +4,11 @@
 #include <vector>
 
 #include "book.h"
-
+using namespace std;
 // Configuration for where to store book details and pdf files.
 struct BookStorageConfig {
-    std::string detailsDirectory;
-    std::string pdfDirectory;
+     string detailsDirectory;
+     string pdfDirectory;
 };
 
 // Handles in-memory book list plus disk persistence to details/<id>.json and pdf/<id>.pdf paths.
@@ -17,31 +17,31 @@ public:
     BookManager();
     explicit BookManager(const BookStorageConfig& config);
 
-    const std::vector<Book>& list_books() const;
+    const  vector<Book>& list_books() const;
     bool has_books() const;
 
     bool load_from_disk();
     bool add_book(const Book& book);
-    bool update_book_by_id(const std::string& id, const Book& updated);
-    bool remove_book_by_id(const std::string& id);
+    bool update_book_by_id(const  string& id, const Book& updated);
+    bool remove_book_by_id(const  string& id);
 
-    const Book* get_book_by_id(const std::string& id) const;
-    const Book* get_book_by_isbn(const std::string& isbn) const;
+    const Book* get_book_by_id(const  string& id) const;
+    const Book* get_book_by_isbn(const  string& isbn) const;
 
-    std::string pdf_path_for_id(const std::string& id) const;
-    bool book_exists_on_disk(const std::string& id) const;
+     string pdf_path_for_id(const  string& id) const;
+    bool book_exists_on_disk(const  string& id) const;
 
 private:
     BookStorageConfig config;
-    std::vector<Book> books;
+     vector<Book> books;
 
-    std::string generate_id() const;
-    std::string details_path_for_id(const std::string& id) const;
-    std::string pdf_path_internal(const std::string& id) const;
+     string generate_id() const;
+     string details_path_for_id(const  string& id) const;
+     string pdf_path_internal(const  string& id) const;
     void ensure_directories() const;
     bool save_book_to_disk(const Book& book) const;
 
-    Book* find_mutable_by_id(const std::string& id);
-    const Book* find_const_by_id(const std::string& id) const;
-    const Book* find_const_by_isbn(const std::string& isbn) const;
+    Book* find_mutable_by_id(const  string& id);
+    const Book* find_const_by_id(const  string& id) const;
+    const Book* find_const_by_isbn(const  string& isbn) const;
 };
