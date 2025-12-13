@@ -3,7 +3,7 @@
 
 *Tugas Kelompok Algoritma*
 
-* Achmad Zulfi Fahmi
+* Achmad Zulfi Fahmi (22507421045)
 * Aidil
 * Mikayla (2507421054)
 * Nazwa (2507421055)
