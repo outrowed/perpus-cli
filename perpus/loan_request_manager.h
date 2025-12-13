@@ -1,4 +1,4 @@
-#include "loan_request_manager.h"
+#pragma once
 
 #include <ctime>
 #include <iomanip>
