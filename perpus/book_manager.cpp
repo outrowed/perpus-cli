@@ -6,9 +6,9 @@
 #include <fstream>
 #include <random>
 #include <sstream>
-using namespace std;
-using  string;
-using  vector;
+
+using std::string;
+using std::vector;
 
 namespace {
 //baca file jd string
@@ -83,7 +83,7 @@ namespace {
 //impleentasi manager buku
 BookManager::BookManager() {
     config.detailsDirectory = "details";
-    config.pdfDirectory = "E-books";
+    config.pdfDirectory = "ebooks";
 }
 
 BookManager::BookManager(const BookStorageConfig& cfg) : config(cfg) {}
