@@ -75,6 +75,7 @@ bool BookManager::load_from_disk() {
         if (extension != ".csv") {
             continue;
         }
+        string originalIdFromFilename = entry.path().stem().string();
          ifstream input(entry.path());
         if (!input.is_open()) {
             continue;
@@ -86,6 +87,21 @@ bool BookManager::load_from_disk() {
             if (parse_book_record(line, book)) {
                 book.isbn = normalize_isbn(book.isbn);
                 book.id = book.isbn;
+                filesystem::path desiredDetailsPath = details_path_for_id(book.id);
+                if (desiredDetailsPath != entry.path() && !filesystem::exists(desiredDetailsPath)) {
+                    try {
+                         filesystem::create_directories(desiredDetailsPath.parent_path());
+                         filesystem::rename(entry.path(), desiredDetailsPath);
+                    } catch (const std::exception&) {}
+                }
+                filesystem::path legacyPdf = pdf_path_internal(originalIdFromFilename);
+                filesystem::path desiredPdf = pdf_path_internal(book.id);
+                if (legacyPdf != desiredPdf &&  filesystem::exists(legacyPdf) && ! filesystem::exists(desiredPdf)) {
+                    try {
+                         filesystem::create_directories(desiredPdf.parent_path());
+                         filesystem::rename(legacyPdf, desiredPdf);
+                    } catch (const std::exception&) {}
+                }
                 try {
                     find_index_by_isbn(book.isbn);
                 } catch (const std::exception&) {
