@@ -85,6 +85,40 @@ bool LoanRequestManager::create_request(const std::string& username, const std::
 bool LoanRequestManager::set_status(int id, LoanStatus status) {
     try {
         LoanRequest& request = get_request(id);
+        if (request.status == status) {
+            return true;
+        }
+
+        // Approving consumes stock; returning replenishes it.
+        if (status == LoanStatus::Approved) {
+            if (request.status != LoanStatus::Pending) {
+                return false;
+            }
+            Book book = bookManager.get_book_by_id(request.bookId);
+            if (book.stock <= 0) {
+                return false;
+            }
+            book.stock -= 1;
+            if (!bookManager.update_book_by_id(book.isbn, book)) {
+                return false;
+            }
+            request.status = status;
+            return true;
+        }
+
+        if (status == LoanStatus::Returned) {
+            if (request.status != LoanStatus::Approved) {
+                return false;
+            }
+            Book book = bookManager.get_book_by_id(request.bookId);
+            book.stock += 1;
+            if (!bookManager.update_book_by_id(book.isbn, book)) {
+                return false;
+            }
+            request.status = status;
+            return true;
+        }
+
         request.status = status;
         return true;
     } catch (const std::exception&) {
