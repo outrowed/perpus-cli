@@ -168,7 +168,7 @@ bool BookManager::remove_book_by_id(const string& id) {
 }
 //nyari buku pake id
 const Book& BookManager::get_book_by_id(const string& isbn) const {
-    string normalized = normalize_isbn(id);
+    string normalized = normalize_isbn(isbn);
     size_t index = find_index_by_isbn(normalized);
     return books[index];
 }
