@@ -30,6 +30,7 @@ int main() {
         println("1. Login");
         println("2. Create account");
         println("0. Exit");
+        printIn("\n=================");
 
         string choice = prompt_required("Choose: ");
         if (choice == "1") {
