@@ -1,7 +1,4 @@
 #include "user_menu.h"
-
-// Implements user flows: browse/read, request/return, and account updates.
-
 #include <filesystem>
 #include <iostream>
 #include <cstdlib>
@@ -12,7 +9,7 @@
 #include "menu_helpers.h"
 #include "session.h"
 
-// Open a PDF path with the platform's default application/browser.
+// Buka pdf make browser
 static bool open_pdf_with_default_app(const std::string& path) {
     if (!std::filesystem::exists(path)) {
         return false;
