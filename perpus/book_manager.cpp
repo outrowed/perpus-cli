@@ -167,7 +167,7 @@ bool BookManager::remove_book_by_id(const string& id) {
     return true;
 }
 //nyari buku pake id
-const Book& BookManager::get_book_by_id(const string& id) const {
+const Book& BookManager::get_book_by_id(const string& isbn) const {
     string normalized = normalize_isbn(id);
     size_t index = find_index_by_isbn(normalized);
     return books[index];
@@ -207,7 +207,7 @@ string BookManager::normalize_isbn(const string& raw) const {
     }
     return "ISBN-" + raw;
 }
-
+//buat directory nyimpen buku
 void BookManager::ensure_directories() const {
      filesystem::create_directories(config.detailsDirectory);
      filesystem::create_directories(config.pdfDirectory);
@@ -236,5 +236,5 @@ size_t BookManager::find_index_by_isbn(const string& isbn) const {
             return i;
         }
     }
-    throw std::runtime_error("Book not found by isbn: " + isbn);
+    throw std::runtime_error("Book not found by isbn(Book not yet available): " + isbn);
 }
