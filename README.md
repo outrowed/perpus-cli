@@ -7,6 +7,8 @@
 *KIta Menghadirkan Perpus-CLI Sistem manajemen perpustakaan berbasis terminal yang
 cepat, aman, dan tentu saja ter ENKRIPSI*
 
+*Made by yours truly:*
+
 * Achmad Zulfi Fahmi (22507421045)
 * Aidil (2507421018) 
 * Mikayla Asha Pahlevi (2507421054)
@@ -14,4 +16,3 @@ cepat, aman, dan tentu saja ter ENKRIPSI*
 * Fathir (2507421016)
 * Taruna Prasetya (2507421081)
 
-*tolong isi NIM kalian disini*
